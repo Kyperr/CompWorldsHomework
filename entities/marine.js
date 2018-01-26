@@ -1,6 +1,7 @@
 function Marine(game, spritesheet) {
-    this.animation = new Animation(spritesheet, 64, 64, 17, 5);
+    this.animation = new Animation(spritesheet, 64, 64, 17, 2);
     this.animation.currentState = "walking0";
+	this.lastAnimChange = 0;
 
     //Mapping walking sprites
 
@@ -21,7 +22,7 @@ function Marine(game, spritesheet) {
     this.movementFactor = new MovementFactor(100);
 
     this.ctx = game.ctx;
-    Entity.call(this, game, 0, 0);
+    Entity.call(this, game, 0, this.ctx.canvas.height - (this.animation.frameHeight * this.animation.scale));
 }
 
 function realMod(a, n) {
@@ -36,13 +37,27 @@ Marine.prototype.update = function () {
 
     var delta = this.game.clockTick;
     var speed = this.movementFactor.speed;
+	this.lastAnimChange += delta;
+	this.lastAnimChange %= 2;
 
     //Walking direction
-    this.x += delta * speed * 1;
-	if(this.x > this.ctx.canvas.width){
-		this.x = -100;
-    }
-    this.animation.currentState = "walking0";
+	if(this.lastAnimChange <= 1){
+		this.x += delta * speed * 1;
+		if(this.x > this.ctx.canvas.width){
+			this.x = -this.animation.frameWidth * this.animation.scale;
+		}
+		this.animation.currentState = "walking0";	
+	} else {
+		this.x += delta * speed * 1;
+		this.y -= delta * speed * 1;
+		if(this.x > this.ctx.canvas.width){
+			this.x = -this.animation.frameWidth * this.animation.scale;
+		}
+		if(this.y < -this.animation.frameHeight * this.animation.scale){
+			this.y = this.ctx.canvas.height + (this.animation.frameHeight * this.animation.scale);
+		}
+		this.animation.currentState = "walking45";	
+	}
 
     Entity.prototype.update.call(this);
     this.lastUpdated = this.game.gameTime;
